@@ -51,8 +51,9 @@ void step() {
 void init_step() {
   t1_d = 0;
   t2_d = 0;
-  t1 = 0;
-  t2 = M_PI + 0.01;
+  SetRandomSeed(time(NULL));
+  t1 = M_PI / 180.0 * GetRandomValue(-90, 90);
+  t2 = M_PI / 180.0 * GetRandomValue(-90, 90);
   m1 = 100;
   m2 = 100;
 }
@@ -64,6 +65,11 @@ int main() {
   while (!WindowShouldClose()) {
     ClearBackground(BLACK);
     BeginDrawing();
+
+    if (IsKeyPressed(KEY_SPACE)) {
+      len = 0;
+      init_step();
+    }
 
     draw_double_pendulum(t1, t2);
     step();
@@ -130,7 +136,7 @@ void show_path(Vector2 dot) {
 
   for (int i = 0; i < len; i++) {
     int a = 255 * i / len;
-    float radius = clamp(10 / queue[i].velocity, 1, 5);
+    float radius = clamp(3.3 / queue[i].velocity, 1.5, 3);
     DrawCircleV(queue[i].pose, radius, CLITERAL(Color){230, 41, 55, a});
   }
 }
