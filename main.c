@@ -26,7 +26,7 @@ float t1, t2, t1_d, t2_d, m1, m2;
 
 #define g 10
 
-#define FPS 200
+#define FPS 400
 
 #define dt (12.0 / FPS)
 
@@ -127,7 +127,7 @@ void show_path(Vector2 dot) {
   float v;
   if (len > 1) {
     v = getV(dot, queue[len - 2].pose);
-    printf("vel:%.2f\n", v);
+    // printf("vel:%.2f\n", v);
   } else {
     v = 0;
   }
