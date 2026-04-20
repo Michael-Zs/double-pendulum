@@ -8,26 +8,58 @@ void show_path(Vector2 dot);
 #define WIDTH 800
 #define HEIGHT 600
 
-#define L1 300
-#define L2 100
+#define L1 200
+#define L2 200
 
-#define QUEUE_LEN 100
+#define QUEUE_LEN 1000
 Vector2 queue[QUEUE_LEN];
 int len = 0;
+
+float t1, t2, t1_d, t2_d, m1, m2;
+
+#define g 10
+
+#define dt 0.1
+
+void step() {
+  float t1_dd = (-g * (2 * m1 + m2) * sinf(t1) - m2 * g * sinf(t1 - 2 * t2) -
+                 2 * sinf(t1 - t2) * m2 *
+                     (t2_d * t2_d * L2 + t1_d * t1_d * L1 * cosf(t1 - t2))) /
+                (L1 * (2 * m1 + m2 - m2 * cosf(2 * t1 - 2 * t2)));
+
+  float t2_dd = (2 * sinf(t1 - t2) *
+                 (t1_d * t1_d * L1 * (m1 + m2) + g * (m1 + m2) * cosf(t1) +
+                  t2_d * t2_d * L2 * m2 * cosf(t1 - t2)) /
+                 (L2 * (2 * m1 + m2 - m2 * cosf(2 * t1 - 2 * t2))));
+
+  t1_d += t1_dd * dt;
+  t2_d += t2_dd * dt;
+
+  t1 += t1_d * dt;
+  t2 += t2_d * dt;
+}
+
+void init_step() {
+  t1_d = 0;
+  t2_d = 0;
+  t1 = 0;
+  t2 = M_PI + 0.01;
+  m1 = 100;
+  m2 = 100;
+}
 
 int main() {
   InitWindow(WIDTH, HEIGHT, "double pendulum");
   SetTargetFPS(60);
-  float t = 0;
+  init_step();
   while (!WindowShouldClose()) {
     ClearBackground(BLACK);
     BeginDrawing();
 
-    draw_double_pendulum(t, t * t);
+    draw_double_pendulum(t1, t2);
+    step();
 
     EndDrawing();
-
-    t += 0.1;
   }
 }
 
