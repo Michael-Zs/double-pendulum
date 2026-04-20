@@ -6,7 +6,7 @@ void draw_double_pendulum(float t1, float t2);
 void show_path(Vector2 dot);
 
 #define WIDTH 800
-#define HEIGHT 600
+#define HEIGHT 800
 
 #define L1 200
 #define L2 200
@@ -52,8 +52,8 @@ void init_step() {
   t1_d = 0;
   t2_d = 0;
   SetRandomSeed(time(NULL));
-  t1 = M_PI / 180.0 * GetRandomValue(-90, 90);
-  t2 = M_PI / 180.0 * GetRandomValue(-90, 90);
+  t1 = M_PI / 180.0 * GetRandomValue(-180, 180);
+  t2 = M_PI / 180.0 * GetRandomValue(-180, 180);
   m1 = 100;
   m2 = 100;
 }
@@ -81,7 +81,7 @@ int main() {
 void draw_double_pendulum(float t1, float t2) {
   float x0, y0, x1, y1, x2, y2;
   x0 = WIDTH / 2;
-  y0 = 0;
+  y0 = HEIGHT / 2;
 
   x1 = x0 + L1 * sinf(t1);
   y1 = y0 + L1 * cosf(t1);
