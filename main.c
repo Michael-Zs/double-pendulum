@@ -12,7 +12,14 @@ void show_path(Vector2 dot);
 #define L2 200
 
 #define QUEUE_LEN 1000
-Vector2 queue[QUEUE_LEN];
+
+typedef struct {
+  Vector2 pose;
+  float velocity;
+} queue_cell;
+
+queue_cell queue[QUEUE_LEN];
+
 int len = 0;
 
 float t1, t2, t1_d, t2_d, m1, m2;
@@ -81,18 +88,39 @@ void draw_double_pendulum(float t1, float t2) {
   show_path((Vector2){x2, y2});
 }
 
+float getV(Vector2 cur, Vector2 pre) {
+  float diffx = cur.x - pre.x;
+  float diffy = cur.y - pre.y;
+  float v = sqrt(diffx * diffx + diffy * diffy);
+  return v;
+}
+
+float min(float i, float j) { return i < j ? i : j; }
+
 void show_path(Vector2 dot) {
   if (len < QUEUE_LEN) {
-    queue[len] = dot;
     len++;
   } else {
     for (int i = 0; i < len - 1; i++) {
       queue[i] = queue[i + 1];
     }
-    queue[len - 1] = dot;
   }
+
+  queue[len - 1].pose = dot;
+
+  float v;
+  if (len > 1) {
+    v = getV(dot, queue[len - 2].pose);
+    printf("vel:%.2f\n", v);
+  } else {
+    v = 0;
+  }
+
+  queue[len - 1].velocity = v;
+
   for (int i = 0; i < len; i++) {
     int a = 255 * i / len;
-    DrawCircleV(queue[i], 2, CLITERAL(Color){230, 41, 55, a});
+    float radius = min(10 / queue[i].velocity, 5);
+    DrawCircleV(queue[i].pose, radius, CLITERAL(Color){230, 41, 55, a});
   }
 }
