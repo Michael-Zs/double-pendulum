@@ -26,7 +26,9 @@ float t1, t2, t1_d, t2_d, m1, m2;
 
 #define g 10
 
-#define dt 0.1
+#define FPS 200
+
+#define dt (12.0 / FPS)
 
 void step() {
   float t1_dd = (-g * (2 * m1 + m2) * sinf(t1) - m2 * g * sinf(t1 - 2 * t2) -
@@ -57,7 +59,7 @@ void init_step() {
 
 int main() {
   InitWindow(WIDTH, HEIGHT, "double pendulum");
-  SetTargetFPS(60);
+  SetTargetFPS(FPS);
   init_step();
   while (!WindowShouldClose()) {
     ClearBackground(BLACK);
@@ -95,7 +97,15 @@ float getV(Vector2 cur, Vector2 pre) {
   return v;
 }
 
-float min(float i, float j) { return i < j ? i : j; }
+float clamp(float i, float min, float max) {
+  if (i < min) {
+    return min;
+  }
+  if (i > max) {
+    return max;
+  }
+  return i;
+}
 
 void show_path(Vector2 dot) {
   if (len < QUEUE_LEN) {
@@ -120,7 +130,7 @@ void show_path(Vector2 dot) {
 
   for (int i = 0; i < len; i++) {
     int a = 255 * i / len;
-    float radius = min(10 / queue[i].velocity, 5);
+    float radius = clamp(10 / queue[i].velocity, 1, 5);
     DrawCircleV(queue[i].pose, radius, CLITERAL(Color){230, 41, 55, a});
   }
 }
