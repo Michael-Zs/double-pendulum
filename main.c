@@ -68,6 +68,7 @@ int main() {
   while (!WindowShouldClose()) {
     ClearBackground(BLACK);
     BeginDrawing();
+    DrawFPS(10, 10);
 
     if (IsKeyPressed(KEY_SPACE)) {
       len = 0;
