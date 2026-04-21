@@ -1,6 +1,8 @@
 #include <math.h>
 #include <raylib.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 
 void draw_double_pendulum(float t1, float t2);
 void show_path(Vector2 dot);
@@ -13,12 +15,13 @@ void show_path(Vector2 dot);
 
 #define QUEUE_LEN 1000
 
-typedef struct {
+struct queue_cell {
   Vector2 pose;
   float velocity;
-} queue_cell;
+  struct queue_cell *next;
+};
 
-queue_cell queue[QUEUE_LEN];
+struct queue_cell *queue_start;
 
 int len = 0;
 
@@ -80,8 +83,8 @@ int main() {
 
 void draw_double_pendulum(float t1, float t2) {
   float x0, y0, x1, y1, x2, y2;
-  x0 = WIDTH / 2;
-  y0 = HEIGHT / 2;
+  x0 = (float)WIDTH / 2;
+  y0 = (float)HEIGHT / 2;
 
   x1 = x0 + L1 * sinf(t1);
   y1 = y0 + L1 * cosf(t1);
@@ -113,30 +116,87 @@ float clamp(float i, float min, float max) {
   return i;
 }
 
-void show_path(Vector2 dot) {
-  if (len < QUEUE_LEN) {
-    len++;
+struct queue_cell *get(int n) {
+  if (n >= len) {
+    return (struct queue_cell *)NULL;
+  }
+  struct queue_cell *pose = queue_start;
+  for (int i = 0; i < n; i++) {
+    pose = pose->next;
+  }
+  return pose;
+}
+
+void append(struct queue_cell cell) {
+  cell.next = NULL;
+
+  if (len == 0) {
+    queue_start = malloc(sizeof(struct queue_cell));
+    *queue_start = cell;
   } else {
-    for (int i = 0; i < len - 1; i++) {
-      queue[i] = queue[i + 1];
-    }
+    struct queue_cell *pose;
+    pose = get(len - 1);
+    pose->next = malloc(sizeof(struct queue_cell));
+    pose = pose->next;
+    *pose = cell;
+  }
+  len++;
+}
+
+struct queue_cell pop(int n) {
+  struct queue_cell *pose, *last;
+  if (n > 0) {
+    last = get(n - 1);
+    pose = last->next;
+    last->next = pose->next;
+  } else {
+    pose = get(n);
+    queue_start = pose->next;
   }
 
-  queue[len - 1].pose = dot;
+  struct queue_cell ret = *pose;
+  free(pose);
+
+  len--;
+
+  return ret;
+}
+
+void show_path(Vector2 dot) {
+  if (len < QUEUE_LEN) {
+  } else {
+    pop(0);
+    // TODO: pop the first
+    // for (int i = 0; i < len - 1; i++) {
+    //   queue[i] = queue[i + 1];
+    // }
+  }
+
+  // TODO: append
+  struct queue_cell cell;
+  cell.pose = dot;
 
   float v;
   if (len > 1) {
-    v = getV(dot, queue[len - 2].pose);
+    // TODO: get last 2
+    v = getV(dot, get(len - 2)->pose);
     // printf("vel:%.2f\n", v);
   } else {
     v = 0;
   }
 
-  queue[len - 1].velocity = v;
+  // TODO: append velocity
+  cell.velocity = v;
+  append(cell);
 
-  for (int i = 0; i < len; i++) {
+  struct queue_cell *pose = queue_start;
+  int i = 0;
+  while (pose != NULL) {
     int a = 255 * i / len;
-    float radius = clamp(3.3 / queue[i].velocity, 1.5, 3);
-    DrawCircleV(queue[i].pose, radius, CLITERAL(Color){230, 41, 55, a});
+    // TODO: for each
+    float radius = clamp(3.3 / pose->velocity, 1.5, 3);
+    DrawCircleV(pose->pose, radius, CLITERAL(Color){230, 41, 55, a});
+    i++;
+    pose = pose->next;
   }
 }
