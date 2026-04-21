@@ -13,17 +13,18 @@ void show_path(Vector2 dot);
 #define L1 200
 #define L2 200
 
-#define QUEUE_LEN 1000
+#define BUF_LEN 1000
 
-struct queue_cell {
+struct cell {
   Vector2 pose;
   float velocity;
-  struct queue_cell *next;
 };
 
-struct queue_cell *queue_start;
-
-int len = 0;
+struct {
+  struct cell data[BUF_LEN];
+  int end;   // write pose
+  int start; // read pose
+} ring_buf;
 
 float t1, t2, t1_d, t2_d, m1, m2;
 
@@ -57,8 +58,8 @@ void init_step() {
   SetRandomSeed(time(NULL));
   t1 = M_PI / 180.0 * GetRandomValue(-180, 180);
   t2 = M_PI / 180.0 * GetRandomValue(-180, 180);
-  m1 = 100;
-  m2 = 100;
+  m1 = 500;
+  m2 = 500;
 }
 
 int main() {
@@ -71,7 +72,8 @@ int main() {
     DrawFPS(10, 10);
 
     if (IsKeyPressed(KEY_SPACE)) {
-      len = 0;
+      ring_buf.start = 0;
+      ring_buf.end = 1;
       init_step();
     }
 
@@ -117,70 +119,57 @@ float clamp(float i, float min, float max) {
   return i;
 }
 
-struct queue_cell *get(int n) {
-  if (n >= len) {
-    return (struct queue_cell *)NULL;
+int getLen(void) {
+  if (ring_buf.start <= ring_buf.end) {
+    return ring_buf.end - ring_buf.start;
+  } else {
+    return BUF_LEN - ring_buf.start + ring_buf.end;
   }
-  struct queue_cell *pose = queue_start;
-  for (int i = 0; i < n; i++) {
-    pose = pose->next;
-  }
-  return pose;
 }
 
-void append(struct queue_cell cell) {
-  cell.next = NULL;
-
-  if (len == 0) {
-    queue_start = malloc(sizeof(struct queue_cell));
-    *queue_start = cell;
-  } else {
-    struct queue_cell *pose;
-    pose = get(len - 1);
-    pose->next = malloc(sizeof(struct queue_cell));
-    pose = pose->next;
-    *pose = cell;
+struct cell get(int n) {
+  if (n >= getLen()) {
+    return (struct cell){};
   }
-  len++;
+  int idx = ring_buf.start + n;
+  if (idx >= BUF_LEN) {
+    idx -= BUF_LEN;
+  }
+  return ring_buf.data[idx];
 }
 
-struct queue_cell pop(int n) {
-  struct queue_cell *pose, *last;
-  if (n > 0) {
-    last = get(n - 1);
-    pose = last->next;
-    last->next = pose->next;
-  } else {
-    pose = get(n);
-    queue_start = pose->next;
+void append(struct cell cell) {
+  int idx = ring_buf.end;
+  ring_buf.data[idx] = cell;
+  ring_buf.end++;
+  if (ring_buf.end >= BUF_LEN) {
+    ring_buf.end = 0;
   }
 
-  struct queue_cell ret = *pose;
-  free(pose);
+  if (ring_buf.end == ring_buf.start) {
+    ring_buf.start++;
+    if (ring_buf.start >= BUF_LEN) {
+      ring_buf.start = 0;
+    }
+  }
+}
 
-  len--;
-
-  return ret;
+struct cell pop(int n) {
+  ring_buf.start++;
+  if (ring_buf.start >= BUF_LEN) {
+    ring_buf.start = 0;
+  }
 }
 
 void show_path(Vector2 dot) {
-  if (len < QUEUE_LEN) {
-  } else {
-    pop(0);
-    // TODO: pop the first
-    // for (int i = 0; i < len - 1; i++) {
-    //   queue[i] = queue[i + 1];
-    // }
-  }
-
   // TODO: append
-  struct queue_cell cell;
+  struct cell cell;
   cell.pose = dot;
 
   float v;
-  if (len > 1) {
+  if (getLen() > 1) {
     // TODO: get last 2
-    v = getV(dot, get(len - 2)->pose);
+    v = getV(dot, get(getLen() - 2).pose);
     // printf("vel:%.2f\n", v);
   } else {
     v = 0;
@@ -190,14 +179,12 @@ void show_path(Vector2 dot) {
   cell.velocity = v;
   append(cell);
 
-  struct queue_cell *pose = queue_start;
   int i = 0;
-  while (pose != NULL) {
-    int a = 255 * i / len;
+  for (int i = 0; i < getLen(); i++) {
+    struct cell pose = get(i);
+    int a = 255 * i / getLen();
     // TODO: for each
-    float radius = clamp(3.3 / pose->velocity, 1.5, 3);
-    DrawCircleV(pose->pose, radius, CLITERAL(Color){230, 41, 55, a});
-    i++;
-    pose = pose->next;
+    float radius = clamp(3.3 / pose.velocity, 1.5, 3);
+    DrawCircleV(pose.pose, radius, CLITERAL(Color){230, 41, 55, a});
   }
 }
