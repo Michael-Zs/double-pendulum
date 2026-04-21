@@ -73,7 +73,7 @@ int main() {
 
     if (IsKeyPressed(KEY_SPACE)) {
       ring_buf.start = 0;
-      ring_buf.end = 1;
+      ring_buf.end = 0;
       init_step();
     }
 
@@ -154,7 +154,7 @@ void append(struct cell cell) {
   }
 }
 
-struct cell pop(int n) {
+void pop(void) {
   ring_buf.start++;
   if (ring_buf.start >= BUF_LEN) {
     ring_buf.start = 0;
@@ -169,7 +169,7 @@ void show_path(Vector2 dot) {
   float v;
   if (getLen() > 1) {
     // TODO: get last 2
-    v = getV(dot, get(getLen() - 2).pose);
+    v = getV(dot, get(getLen() - 1).pose);
     // printf("vel:%.2f\n", v);
   } else {
     v = 0;
@@ -179,7 +179,6 @@ void show_path(Vector2 dot) {
   cell.velocity = v;
   append(cell);
 
-  int i = 0;
   for (int i = 0; i < getLen(); i++) {
     struct cell pose = get(i);
     int a = 255 * i / getLen();
