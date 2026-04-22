@@ -34,22 +34,29 @@ float t1, t2, t1_d, t2_d, m1, m2;
 
 #define dt (12.0 / FPS)
 
-void step() {
-  float t1_dd = (-g * (2 * m1 + m2) * sinf(t1) - m2 * g * sinf(t1 - 2 * t2) -
-                 2 * sinf(t1 - t2) * m2 *
-                     (t2_d * t2_d * L2 + t1_d * t1_d * L1 * cosf(t1 - t2))) /
-                (L1 * (2 * m1 + m2 - m2 * cosf(2 * t1 - 2 * t2)));
+float base_direction = 0;
 
-  float t2_dd = (2 * sinf(t1 - t2) *
-                 (t1_d * t1_d * L1 * (m1 + m2) + g * (m1 + m2) * cosf(t1) +
-                  t2_d * t2_d * L2 * m2 * cosf(t1 - t2)) /
-                 (L2 * (2 * m1 + m2 - m2 * cosf(2 * t1 - 2 * t2))));
+void step(float direction) {
+  float tt1 = t1 + direction - base_direction;
+  float tt2 = t2 + direction - base_direction;
+  float t1_dd = (-g * (2 * m1 + m2) * sinf(tt1) - m2 * g * sinf(tt1 - 2 * tt2) -
+                 2 * sinf(tt1 - tt2) * m2 *
+                     (t2_d * t2_d * L2 + t1_d * t1_d * L1 * cosf(tt1 - tt2))) /
+                (L1 * (2 * m1 + m2 - m2 * cosf(2 * tt1 - 2 * tt2)));
+
+  float t2_dd = (2 * sinf(tt1 - tt2) *
+                 (t1_d * t1_d * L1 * (m1 + m2) + g * (m1 + m2) * cosf(tt1) +
+                  t2_d * t2_d * L2 * m2 * cosf(tt1 - tt2)) /
+                 (L2 * (2 * m1 + m2 - m2 * cosf(2 * tt1 - 2 * tt2))));
 
   t1_d += t1_dd * dt;
   t2_d += t2_dd * dt;
 
-  t1 += t1_d * dt;
-  t2 += t2_d * dt;
+  tt1 += t1_d * dt;
+  tt2 += t2_d * dt;
+
+  t1 = tt1 - direction;
+  t2 = tt2 - direction;
 }
 
 void init_step() {
@@ -67,6 +74,8 @@ int main() {
 
   SetRandomSeed(time(NULL));
   init_step();
+  float direction = 0;
+  bool mouseMode = 0;
   while (!WindowShouldClose()) {
     ClearBackground(BLACK);
     BeginDrawing();
@@ -78,8 +87,23 @@ int main() {
       init_step();
     }
 
+    if (IsKeyPressed(KEY_P)) {
+      mouseMode = !mouseMode;
+    }
+
+    if (mouseMode) {
+      DrawText(TextFormat("Mouse Mode On: %.2fdeg", direction / M_PI * 180), 20,
+               40, 20, WHITE);
+      Vector2 dire = GetMousePosition();
+      dire.x -= (float)WIDTH / 2;
+      dire.y -= (float)HEIGHT / 2;
+      direction = -atan2(dire.x, dire.y);
+    }
+    // printf("mouse:%f,%f,dirc:%f\n", dire.x, dire.y, direction / M_PI *
+    // 180.0);
+
     draw_double_pendulum(t1, t2);
-    step();
+    step(direction);
 
     EndDrawing();
   }
