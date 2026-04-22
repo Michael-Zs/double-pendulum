@@ -1,7 +1,9 @@
 #include <math.h>
 #include <raylib.h>
+#include <raymath.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 
 void draw_double_pendulum(float t1, float t2);
@@ -10,8 +12,8 @@ void show_path(Vector2 dot);
 #define WIDTH 800
 #define HEIGHT 800
 
-#define L1 200
-#define L2 200
+float L1 = 200;
+float L2 = 200;
 
 #define BUF_LEN 1000
 
@@ -28,7 +30,7 @@ struct {
 
 float t1, t2, t1_d, t2_d, m1, m2;
 
-#define g 10
+float g = 10;
 
 #define FPS 400
 
@@ -58,26 +60,90 @@ void step(float direction) {
 }
 
 void init_step() {
-  t1_d = 0;
-  t2_d = 0;
   t1 = M_PI / 180.0 * GetRandomValue(-180, 180);
   t2 = M_PI / 180.0 * GetRandomValue(-180, 180);
-  m1 = 500;
-  m2 = 500;
 }
+
+// map x form fa,fb to ta,tb
+float map(float x, float fa, float fb, float ta, float tb) {
+  float sizef = fb - fa;
+  float sizet = tb - ta;
+  float ret = ta + x / sizef * sizet;
+  ret = Clamp(ret, ta, tb);
+  return ret;
+}
+
+void dragBar(float *var, float min, float max, bool *is_dragged, float x,
+             float y) {
+  float pointRadius = 10;
+  float barLen = 300;
+  float barHei = 5;
+  float pointDiv = map(*var, min, max, 0, barLen);
+  DrawRectangle(x, y, pointDiv, barHei, WHITE);
+  DrawRectangle(x + pointDiv, y, barLen - pointDiv, barHei, GRAY);
+
+  Vector2 pointPose = {x + pointDiv, y + barHei / 2};
+  Color c;
+  if (*is_dragged) {
+    c = GREEN;
+  } else {
+    c = RED;
+  }
+  DrawCircleV(pointPose, pointRadius, c);
+
+  if (*is_dragged) {
+    Vector2 pose = GetMousePosition();
+    float mx = pose.x - x;
+    *var = map(mx, 0, barLen, min, max);
+  }
+
+  if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+    Vector2 pose = GetMousePosition();
+    if (Vector2Distance(pose, pointPose) <= pointRadius) {
+      *is_dragged = true;
+    }
+  }
+
+  if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) {
+    *is_dragged = false;
+  }
+}
+
+void dragBarWithText(char *str, float *var, float min, float max,
+                     bool *is_dragged, float x, float y) {
+  DrawText(TextFormat("%s:%.2f", str, *var), x, y, 20, WHITE);
+  dragBar(var, min, max, is_dragged, x + strlen(str) * 20 + 30, y);
+}
+
+bool test_drag;
 
 int main() {
   InitWindow(WIDTH, HEIGHT, "double pendulum");
   SetTargetFPS(FPS);
 
   SetRandomSeed(time(NULL));
+  t1_d = 0;
+  t2_d = 0;
+  m1 = 500;
+  m2 = 500;
   init_step();
   float direction = 0;
   bool mouseMode = 0;
+
+  bool l1_drag, l2_drag, m1_drag, m2_drag, g_drag;
+  float test_val = 0;
   while (!WindowShouldClose()) {
     ClearBackground(BLACK);
     BeginDrawing();
     DrawFPS(10, 10);
+
+    if (IsKeyDown(KEY_S)) {
+      dragBarWithText("L1", &L1, 0.01, 300, &l1_drag, 10, 50);
+      dragBarWithText("L2", &L2, 0.01, 300, &l2_drag, 10, 80);
+      dragBarWithText("M1", &m1, 0.01, 900, &m1_drag, 10, 110);
+      dragBarWithText("M2", &m2, 0.01, 900, &m2_drag, 10, 140);
+      dragBarWithText("G", &g, 0.01, 100, &g_drag, 10, 170);
+    }
 
     if (IsKeyPressed(KEY_SPACE)) {
       ring_buf.start = 0;
@@ -97,8 +163,6 @@ int main() {
       dire.y -= (float)HEIGHT / 2;
       direction = -atan2(dire.x, dire.y);
     }
-    // printf("mouse:%f,%f,dirc:%f\n", dire.x, dire.y, direction / M_PI *
-    // 180.0);
 
     draw_double_pendulum(t1, t2);
     step(direction);
