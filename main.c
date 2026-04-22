@@ -34,11 +34,9 @@ float t1, t2, t1_d, t2_d, m1, m2;
 
 #define dt (12.0 / FPS)
 
-float base_direction = 0;
-
 void step(float direction) {
-  float tt1 = t1 + direction - base_direction;
-  float tt2 = t2 + direction - base_direction;
+  float tt1 = t1 + direction;
+  float tt2 = t2 + direction;
   float t1_dd = (-g * (2 * m1 + m2) * sinf(tt1) - m2 * g * sinf(tt1 - 2 * tt2) -
                  2 * sinf(tt1 - tt2) * m2 *
                      (t2_d * t2_d * L2 + t1_d * t1_d * L1 * cosf(tt1 - tt2))) /
