@@ -30,11 +30,20 @@ struct {
 
 float t1, t2, t1_d, t2_d, m1, m2;
 
-float g = 10;
+float g = 10, damping = 0;
 
 #define FPS 400
 
 #define dt (12.0 / FPS)
+
+// float damp(float v) {
+//   float ab = fabs(v);
+//   ab -= damping * dt;
+//   ab = fmax(0, ab);
+//   ab *= v > 0 ? 1 : -1;
+//   return ab;
+// }
+float damp(float v) { return v * (1 - damping * dt); }
 
 void step(float direction) {
   float tt1 = t1 + direction;
@@ -51,6 +60,9 @@ void step(float direction) {
 
   t1_d += t1_dd * dt;
   t2_d += t2_dd * dt;
+
+  t1_d = damp(t1_d);
+  t2_d = damp(t2_d);
 
   tt1 += t1_d * dt;
   tt2 += t2_d * dt;
@@ -130,7 +142,7 @@ int main() {
   float direction = 0;
   bool mouseMode = 0;
 
-  bool l1_drag, l2_drag, m1_drag, m2_drag, g_drag;
+  bool l1_drag, l2_drag, m1_drag, m2_drag, g_drag, damping_drag;
   float test_val = 0;
   while (!WindowShouldClose()) {
     ClearBackground(BLACK);
@@ -143,6 +155,7 @@ int main() {
       dragBarWithText("M1", &m1, 0.01, 900, &m1_drag, 10, 110);
       dragBarWithText("M2", &m2, 0.01, 900, &m2_drag, 10, 140);
       dragBarWithText("G", &g, 0.01, 100, &g_drag, 10, 170);
+      dragBarWithText("damping", &damping, 0, 0.5, &damping_drag, 10, 200);
     }
 
     if (IsKeyPressed(KEY_SPACE)) {
