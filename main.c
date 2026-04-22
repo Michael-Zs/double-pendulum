@@ -55,7 +55,6 @@ void step() {
 void init_step() {
   t1_d = 0;
   t2_d = 0;
-  SetRandomSeed(time(NULL));
   t1 = M_PI / 180.0 * GetRandomValue(-180, 180);
   t2 = M_PI / 180.0 * GetRandomValue(-180, 180);
   m1 = 500;
@@ -65,6 +64,8 @@ void init_step() {
 int main() {
   InitWindow(WIDTH, HEIGHT, "double pendulum");
   SetTargetFPS(FPS);
+
+  SetRandomSeed(time(NULL));
   init_step();
   while (!WindowShouldClose()) {
     ClearBackground(BLACK);
