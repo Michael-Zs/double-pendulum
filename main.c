@@ -149,6 +149,10 @@ int main() {
     BeginDrawing();
     DrawFPS(10, 10);
 
+    if (IsKeyDown(KEY_Q)) {
+      break;
+    }
+
     if (IsKeyDown(KEY_S)) {
       dragBarWithText("L1", &L1, 0.01, 300, &l1_drag, 10, 50);
       dragBarWithText("L2", &L2, 0.01, 300, &l2_drag, 10, 80);
