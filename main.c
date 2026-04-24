@@ -43,7 +43,9 @@ float g = 10, damping = 0;
 //   ab *= v > 0 ? 1 : -1;
 //   return ab;
 // }
-float damp(float v) { return v * (1 - damping * dt); }
+float damp(float v) {
+  return v - Clamp(v * damping * dt, -damping * 0.6, damping * 0.3);
+}
 
 void step(float direction) {
   float tt1 = t1 + direction;
