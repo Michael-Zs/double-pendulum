@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <math.h>
 #include <raylib.h>
 #include <raymath.h>
@@ -234,9 +235,9 @@ int getLen(void) {
 }
 
 struct cell get(int n) {
-  if (n >= getLen()) {
-    return (struct cell){};
-  }
+
+  assert(n < getLen() && "Out of range");
+
   int idx = ring_buf.start + n;
   if (idx >= BUF_LEN) {
     idx -= BUF_LEN;
@@ -261,6 +262,7 @@ void append(struct cell cell) {
 }
 
 void pop(void) {
+  assert(getLen() > 0 && "No items");
   ring_buf.start++;
   if (ring_buf.start >= BUF_LEN) {
     ring_buf.start = 0;
